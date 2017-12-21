@@ -28,3 +28,11 @@
 *.app
 
 *.opendb
+*.ipch
+ipch/
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+*.cachefile
+*.db
