@@ -36,3 +36,4 @@ ipch/
 *.sdf
 *.cachefile
 *.db
+*.dmp
