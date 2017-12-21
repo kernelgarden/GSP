@@ -10,22 +10,22 @@
 __declspec(thread) int LIoThreadId = 0;
 IocpManager* GIocpManager = nullptr;
 
-
-//TODO AcceptEx DisconnectEx 함수 사용할 수 있도록 구현.
-
+/*
 BOOL DisconnectEx(SOCKET hSocket, LPOVERLAPPED lpOverlapped, DWORD dwFlags, DWORD reserved)
 {
-	//return ...
-	return 0;
+	return IocpManager::lpfnDisconnectEx(hSocket, lpOverlapped, dwFlags, reserved);
 }
 
-/* 참고: 최신 버전의 Windows SDK에서는 그냥 구현되어 있음
-BOOL AcceptEx(SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer, DWORD dwReceiveDataLength,
+BOOL AcceptEx_(SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer, DWORD dwReceiveDataLength,
 	DWORD dwLocalAddressLength, DWORD dwRemoteAddressLength, LPDWORD lpdwBytesReceived, LPOVERLAPPED lpOverlapped)
 {
-	return 0;
+	return IocpManager::lpfnAcceptEx(sListenSocket, sAcceptSocket, lpOutputBuffer, dwReceiveDataLength,
+		dwLocalAddressLength, dwRemoteAddressLength, lpdwBytesReceived, lpOverlapped);
 }
 */
+LPFN_ACCEPTEX IocpManager::lpfnAcceptEx = nullptr;
+LPFN_DISCONNECTEX IocpManager::lpfnDisconnectEx = nullptr;
+
 IocpManager::IocpManager() : mCompletionPort(NULL), mIoThreadCount(2), mListenSocket(NULL)
 {	
 }
@@ -77,12 +77,13 @@ bool IocpManager::Initialize()
 	if (SOCKET_ERROR == bind(mListenSocket, (SOCKADDR*)&serveraddr, sizeof(serveraddr)))
 		return false;
 
-	//TODO : WSAIoctl을 이용하여 AcceptEx, DisconnectEx 함수 사용가능하도록 하는 작업..
+	DWORD dwBytes = 0;
+	GUID guidAcceptEx = WSAID_ACCEPTEX;
+	WSAIoctl(mListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidAcceptEx, sizeof(guidAcceptEx), &lpfnAcceptEx, sizeof(lpfnAcceptEx), &dwBytes, NULL, NULL);
 
-
-
-
-
+	GUID guidDisconnectEx = WSAID_DISCONNECTEX;
+	WSAIoctl(mListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidDisconnectEx, sizeof(guidDisconnectEx), &lpfnDisconnectEx,
+		sizeof(lpfnDisconnectEx), &dwBytes, NULL, NULL);
 
 	/// make session pool
 	GSessionManager->PrepareSessions();
@@ -153,8 +154,8 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 		{
 			int gle = GetLastError();
 
-			//TODO: check time out first ... GQCS 타임 아웃의 경우는 어떻게?
-			
+			if (WAIT_TIMEOUT == gle)
+				continue;
 		
 			if (context->mIoType == IO_RECV || context->mIoType == IO_SEND )
 			{
@@ -216,11 +217,13 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 bool IocpManager::PreReceiveCompletion(ClientSession* client, OverlappedPreRecvContext* context, DWORD dwTransferred)
 {
 	/// real receive...
-	return client->PreRecv();
+	//return client->PreRecv();
+	return client->PostRecv();
 }
 
 bool IocpManager::ReceiveCompletion(ClientSession* client, OverlappedRecvContext* context, DWORD dwTransferred)
 {
+	printf_s("[Received] size: %d\n", dwTransferred);
 	client->RecvCompletion(dwTransferred);
 
 	/// echo back
@@ -229,6 +232,7 @@ bool IocpManager::ReceiveCompletion(ClientSession* client, OverlappedRecvContext
 
 bool IocpManager::SendCompletion(ClientSession* client, OverlappedSendContext* context, DWORD dwTransferred)
 {
+	printf_s("[Send] size: %d\n", dwTransferred);
 	client->SendCompletion(dwTransferred);
 
 	if (context->mWsaBuf.len != dwTransferred)

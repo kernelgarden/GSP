@@ -26,7 +26,7 @@ bool ClientSession::OnConnect(SOCKADDR_IN* addr)
 		return false;
 	}
 	
-	HANDLE handle = 0; //TODO: 여기에서 CreateIoCompletionPort((HANDLE)mSocket, ...);사용하여 연결할 것
+	HANDLE handle = CreateIoCompletionPort((HANDLE)mSocket, GIocpManager->GetComletionPort(), (ULONG_PTR)this, 0);
 	if (handle != GIocpManager->GetComletionPort())
 	{
 		printf_s("[DEBUG] CreateIoCompletionPort error: %d\n", GetLastError());
@@ -75,9 +75,20 @@ bool ClientSession::PostRecv() const
 		return false;
 
 	OverlappedIOContext* recvContext = new OverlappedIOContext(this, IO_RECV);
+	ZeroMemory(recvContext->mBuffer, BUFSIZE);
+	recvContext->mWsaBuf.buf = recvContext->mBuffer;
+	recvContext->mWsaBuf.len = BUFSIZE;
 
 	//TODO: WSARecv 사용하여 구현할 것
-
+	DWORD received = 0, flag = 0;
+	if (SOCKET_ERROR == WSARecv(mSocket, &(recvContext->mWsaBuf), 1, &received, &flag, (LPWSAOVERLAPPED)recvContext, NULL))
+	{
+		if (GetLastError() != WSA_IO_PENDING)
+		{
+			printf_s("ERROR!!");
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -88,12 +99,31 @@ bool ClientSession::PostSend(const char* buf, int len) const
 		return false;
 
 	OverlappedIOContext* sendContext = new OverlappedIOContext(this, IO_SEND);
+	ZeroMemory(sendContext->mBuffer, BUFSIZE);
+	sendContext->mWsaBuf.buf = sendContext->mBuffer;
+	sendContext->mWsaBuf.len = len;
 
 	/// copy for echoing back..
 	memcpy_s(sendContext->mBuffer, BUFSIZE, buf, len);
 
-	//TODO: WSASend 사용하여 구현할 것
+	DWORD flag = 0;
+	DWORD sendBytes = 0;
 
+	//TODO: WSASend 사용하여 구현할 것
+	if (SOCKET_ERROR == WSASend(mSocket, &(sendContext->mWsaBuf), 1, &sendBytes, flag, (LPWSAOVERLAPPED)sendContext, NULL))
+	{
+		if (GetLastError() != WSA_IO_PENDING)
+		{
+			delete sendContext;
+			printf_s("Send Error!\n");
+			return false;
+		}
+	}
 
 	return true;
+}
+
+short ClientSession::GetPort() const
+{
+	return ntohs(mClientAddr.sin_port);
 }

@@ -41,12 +41,12 @@ public:
 	{
 		LockGuard()
 		{
-			TargetClass::mLock.EnterLock();
+			ClassTypeLock<TargetClass>::mLock.EnterLock();
 		}
 
 		~LockGuard()
 		{
-			TargetClass::mLock.LeaveLock();
+			ClassTypeLock<TargetClass>::mLock.LeaveLock();
 		}
 
 	};

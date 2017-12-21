@@ -48,8 +48,22 @@ bool ClientSession::PostAccept()
 	CRASH_ASSERT(LThreadType == THREAD_MAIN);
 
 	OverlappedAcceptContext* acceptContext = new OverlappedAcceptContext(this);
+	acceptContext->mWsaBuf.len = 0;
+	acceptContext->mWsaBuf.buf = nullptr;
 
-	//TODO : AccpetEx를 이용한 구현.
+	char acceptBuf[1024];
+	DWORD dwBytes;
+	if (FALSE == IocpManager::lpfnAcceptEx(*(GIocpManager->GetListenSocket()), mSocket, acceptBuf, 0, 
+			sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &dwBytes, (LPOVERLAPPED)acceptContext))
+	{
+		if (WSA_IO_PENDING != GetLastError())
+		{
+			printf_s("[DEBUG] AccpetEx Failed: %d\n", GetLastError());
+			DeleteIoContext(acceptContext);
+
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -68,6 +82,7 @@ void ClientSession::AcceptCompletion()
 	bool resultOk = true;
 	do 
 	{
+		// can overlapped, can reuse
 		if (SOCKET_ERROR == setsockopt(mSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)GIocpManager->GetListenSocket(), sizeof(SOCKET)))
 		{
 			printf_s("[DEBUG] SO_UPDATE_ACCEPT_CONTEXT error: %d\n", GetLastError());
@@ -75,6 +90,7 @@ void ClientSession::AcceptCompletion()
 			break;
 		}
 
+		// nagle off
 		int opt = 1;
 		if (SOCKET_ERROR == setsockopt(mSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(int)))
 		{
@@ -83,6 +99,7 @@ void ClientSession::AcceptCompletion()
 			break;
 		}
 
+		// not used user buf
 		opt = 0;
 		if (SOCKET_ERROR == setsockopt(mSocket, SOL_SOCKET, SO_RCVBUF, (const char*)&opt, sizeof(int)))
 		{
@@ -99,10 +116,13 @@ void ClientSession::AcceptCompletion()
 			break;
 		}
 
-		//TODO: CreateIoCompletionPort를 이용한 소켓 연결
-		//HANDLE handle = CreateIoCompletionPort(...);
-		
-
+		HANDLE handle = CreateIoCompletionPort((HANDLE)mSocket, GIocpManager->GetComletionPort(), 0, 0);
+		if (handle == INVALID_HANDLE_VALUE)
+		{
+			printf_s("[DEBUG] Connect socket to IOCP is failed: %d\n", GetLastError());
+			resultOk = false;
+			break;
+		}
 	} while (false);
 
 
@@ -128,8 +148,18 @@ void ClientSession::DisconnectRequest(DisconnectReason dr)
 		return ;
 	
 	OverlappedDisconnectContext* context = new OverlappedDisconnectContext(this, dr);
+	context->mWsaBuf.buf = nullptr;
+	context->mWsaBuf.len = 0;
 
-	//TODO: DisconnectEx를 이용한 연결 끊기 요청
+	if (SOCKET_ERROR == IocpManager::lpfnDisconnectEx(mSocket, (LPOVERLAPPED)context, TF_REUSE_SOCKET, 0))
+	{
+		if (WSA_IO_PENDING != GetLastError())
+		{
+			printf_s("[DEBUG] Disconnect error: %d\n", GetLastError());
+			DeleteIoContext(context);
+			return;
+		}
+	}
 }
 
 void ClientSession::DisconnectCompletion(DisconnectReason dr)
@@ -147,9 +177,19 @@ bool ClientSession::PreRecv()
 		return false;
 
 	OverlappedPreRecvContext* recvContext = new OverlappedPreRecvContext(this);
+	recvContext->mWsaBuf.buf = nullptr;
+	recvContext->mWsaBuf.len = 0;
 
-	//TODO: zero-byte recv 구현
-
+	DWORD recvBytes = 0, flags = 0;
+	if (SOCKET_ERROR == WSARecv(mSocket, &(recvContext->mWsaBuf), 1, &recvBytes, &flags, (LPWSAOVERLAPPED)recvContext, NULL))
+	{
+		if (WSA_IO_PENDING != GetLastError())
+		{
+			printf_s("[DEBUG] PreRecv Error: %d\n", GetLastError());
+			DeleteIoContext(recvContext);
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -171,7 +211,6 @@ bool ClientSession::PostRecv()
 	recvContext->mWsaBuf.len = (ULONG)mBuffer.GetFreeSpaceSize();
 	recvContext->mWsaBuf.buf = mBuffer.GetBuffer();
 	
-
 	/// start real recv
 	if (SOCKET_ERROR == WSARecv(mSocket, &recvContext->mWsaBuf, 1, &recvbytes, &flags, (LPWSAOVERLAPPED)recvContext, NULL))
 	{
@@ -181,7 +220,6 @@ bool ClientSession::PostRecv()
 			printf_s("ClientSession::PostRecv Error : %d\n", GetLastError());
 			return false;
 		}
-			
 	}
 
 	return true;

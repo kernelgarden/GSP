@@ -8,8 +8,8 @@ ClientSession* SessionManager::CreateClientSession(SOCKET sock)
 {
 	ClientSession* client = new ClientSession(sock);
 
-	//TODO: lock으로 보호할 것
 	{
+		FastSpinlockGuard criticalSection(mLock);
 		mClientList.insert(ClientList::value_type(sock, client));
 	}
 
@@ -19,8 +19,8 @@ ClientSession* SessionManager::CreateClientSession(SOCKET sock)
 
 void SessionManager::DeleteClientSession(ClientSession* client)
 {
-	//TODO: lock으로 보호할 것
 	{
+		FastSpinlockGuard criticalSection(mLock);
 		mClientList.erase(client->mSocket);
 	}
 	

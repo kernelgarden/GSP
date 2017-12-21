@@ -1,4 +1,5 @@
 #pragma once
+#include "FastSpinlock.h"
 
 #define BUFSIZE	4096
 
@@ -57,7 +58,7 @@ public:
 	bool	PostRecv() const ;
 	bool	PostSend(const char* buf, int len) const ;
 	void	Disconnect(DisconnectReason dr);
-	
+	short	GetPort() const;
 
 private:
 	bool			mConnected ;
@@ -65,7 +66,7 @@ private:
 
 	SOCKADDR_IN		mClientAddr ;
 		
-	//TODO: mLock; 선언할 것
+	FastSpinlock	mLock;
 
 	friend class SessionManager;
 } ;

@@ -20,6 +20,8 @@ public:
 	bool StartIoThreads();
 	void StartAccept();
 
+	static LPFN_ACCEPTEX	  lpfnAcceptEx;
+	static LPFN_DISCONNECTEX  lpfnDisconnectEx;
 
 	HANDLE GetComletionPort()	{ return mCompletionPort; }
 	int	GetIoThreadCount()		{ return mIoThreadCount;  }
@@ -36,10 +38,10 @@ private:
 
 private:
 
-	HANDLE	mCompletionPort;
-	int		mIoThreadCount;
+	HANDLE		mCompletionPort;
+	int			mIoThreadCount;
 
-	SOCKET	mListenSocket;
+	SOCKET		mListenSocket;
 };
 
 extern __declspec(thread) int LIoThreadId;

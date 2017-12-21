@@ -1,0 +1,18 @@
+﻿  stdafx.cpp
+  ClientSession.cpp
+ClientSession.cpp(39): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  C:\Program Files (x86)\Windows Kits\8.1\Include\um\WinSock2.h(1868): note: 'inet_ntoa' 선언을 참조하십시오.
+ClientSession.cpp(63): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  C:\Program Files (x86)\Windows Kits\8.1\Include\um\WinSock2.h(1868): note: 'inet_ntoa' 선언을 참조하십시오.
+  EduServer_IOCP.cpp
+  Exception.cpp
+C:\Program Files (x86)\Windows Kits\8.1\Include\um\DbgHelp.h(1544): warning C4091: 'typedef ': 변수를 선언하지 않으면 '' 왼쪽은 무시됩니다.
+C:\Program Files (x86)\Windows Kits\8.1\Include\um\DbgHelp.h(3190): warning C4091: 'typedef ': 변수를 선언하지 않으면 '' 왼쪽은 무시됩니다.
+  FastSpinlock.cpp
+  IocpManager.cpp
+  SessionManager.cpp
+  코드를 생성하고 있습니다.
+  All 178 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  코드를 생성했습니다.
+  EduServer_IOCP.vcxproj -> C:\Users\user\Documents\GitHub\GSP\Homework1\Release\EduServer_IOCP.exe
+  EduServer_IOCP.vcxproj -> C:\Users\user\Documents\GitHub\GSP\Homework1\Release\EduServer_IOCP.pdb (Full PDB)

@@ -4,10 +4,10 @@
 #include <vector>
 #include <deque>
 #include <set>
-#include <hash_set>
-#include <hash_map>
 #include <map>
 #include <queue>
+#include <unordered_map>
+#include <unordered_set>
 
 template <class T>
 class STLAllocator
@@ -45,17 +45,16 @@ public:
 
 	T* allocate(size_t n)
 	{
-		//TODO: 메모리풀에서 할당해서 리턴
-		return static_cast<T*>(malloc(n*sizeof(T)));
+		// 메모리풀에서 할당해서 리턴
+		return static_cast<T*>(GMemoryPool->Allocate((int)n * sizeof(T)));
 	}
 
 	void deallocate(T* ptr, size_t n)
 	{
-		//TODO: 메모리풀에 반납
-		free(ptr);
+		// 메모리풀에 반납
+		GMemoryPool->Deallocate(ptr, n * sizeof(T));
 	}
 };
-
 
 template <class T>
 struct xvector
@@ -66,48 +65,48 @@ struct xvector
 template <class T>
 struct xdeque
 {
-	//TODO: STL 할당자를 사용하는 deque를 type으로 선언
-	//typedef ... type;
+	// STL 할당자를 사용하는 deque를 type으로 선언
+	typedef std::deque<T, STLAllocator<T>> type;
 };
 
 template <class T>
 struct xlist
 {
-	//TODO: STL 할당자 사용
-	typedef std::list<T> type;
+	// STL 할당자 사용
+	typedef std::list<T, STLAllocator<T>> type;
 };
 
 template <class K, class T, class C = std::less<K> >
 struct xmap
 {
-	//TODO: STL 할당자 사용하는 map을  type으로 선언
-	//typedef ... type;
+	// STL 할당자 사용하는 map을  type으로 선언
+	typedef std::map<K, T, C, STLAllocator<std::pair<K, T>> > type;
 };
 
 template <class T, class C = std::less<T> >
 struct xset
 {
-	//TODO: STL 할당자 사용하는 set을  type으로 선언
-	//typedef ... type;
+	// STL 할당자 사용하는 set을  type으로 선언
+	typedef std::set<T, C, STLAllocator<T>> type;
 };
 
 template <class K, class T, class C = std::hash_compare<K, std::less<K>> >
 struct xhash_map
 {
-	typedef std::hash_map<K, T, C, STLAllocator<std::pair<K, T>> > type;
+	typedef std::unordered_map<K, T, C, STLAllocator<std::pair<K, T>> > type;
 };
 
 template <class T, class C = std::hash_compare<T, std::less<T>> >
 struct xhash_set
 {
-	typedef std::hash_set<T, C, STLAllocator<T> > type;
+	typedef std::unordered_set<T, C, STLAllocator<T> > type;
 };
 
 template <class T, class C = std::less<std::vector<T>::value_type> >
 struct xpriority_queue
 {
-	//TODO: STL 할당자 사용하는 priority_queue을  type으로 선언
-	//typedef ... type;
+	// STL 할당자 사용하는 priority_queue을  type으로 선언
+	typedef std::priority_queue<T, std::vector<T, STLAllocator<T>>, C> type;
 };
 
 typedef std::basic_string<wchar_t, std::char_traits<wchar_t>, STLAllocator<wchar_t>> xstring;
