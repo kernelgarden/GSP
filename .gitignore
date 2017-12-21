@@ -37,3 +37,6 @@ ipch/
 *.cachefile
 *.db
 *.dmp
+
+Debug/
+Release/
