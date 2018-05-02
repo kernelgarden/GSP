@@ -32,12 +32,11 @@ void Player::Start(int heartbeat)
 	mIsAlive = true;
 	mHeartBeat = heartbeat;
 	
-	/// ID 발급 및 플레잉어 맵에 등록
+	/// ID 발급 및 플레이어를 맵에 등록
 	mPlayerId = GPlayerManager->RegisterPlayer(GetSharedFromThis<Player>());
 
 	/// 생명 불어넣기 ㄱㄱ
 	OnTick();
-
 }
 
 void Player::OnTick()
@@ -57,14 +56,12 @@ void Player::OnTick()
 		GCEDispatch(playerEvent, &AllPlayerBuffEvent::DoBuffToAllPlayers, mPlayerId);
 	}
 
-
-	//TODO: AllPlayerBuffDecay::CheckBuffTimeout를 GrandCentralExecuter를 통해 실행
-
-	
+	// 여기서 체크해도되나?? 오버헤드가 클것 같아보임..
+	auto playerDecayEvent = std::make_shared<AllPlayerBuffDecay>();
+	GCEDispatch(playerDecayEvent, &AllPlayerBuffDecay::CheckBuffTimeout);
 	
 	if (mHeartBeat > 0)
 		DoSyncAfter(mHeartBeat, GetSharedFromThis<Player>(), &Player::OnTick);
-		
 }
 
 void Player::AddBuff(int fromPlayerId, int buffId, int duration)

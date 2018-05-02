@@ -25,7 +25,6 @@ void LockOrderChecker::Push(FastSpinlock* lock)
 
 void LockOrderChecker::Pop(FastSpinlock* lock)
 {
-
 	/// 최소한 락이 잡혀 있는 상태여야 할 것이고
 	CRASH_ASSERT(mStackTopPos > 0);
 	
