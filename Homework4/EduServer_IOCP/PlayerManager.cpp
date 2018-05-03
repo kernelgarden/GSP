@@ -35,7 +35,7 @@ int PlayerManager::GetCurrentPlayers(PlayerList& outList)
 	for (auto& it : mPlayerMap)
 		outList.push_back(it.second);
 
-	total = outList.size;
+	total = outList.size();
 
 	return total;
 }

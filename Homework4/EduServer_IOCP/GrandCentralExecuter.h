@@ -19,8 +19,9 @@ public:
 		
 		if (InterlockedIncrement64(&mRemainTaskCount) > 1)
 		{
-			//TODO: 이미 누군가 작업중이면 어떻게?
-			
+			// 이미 누군가 작업 중이다. concurrent_queue는 스레드 세이프 하므로
+			// 큐에다 push 해주고 뜨자.
+			mCentralTaskQueue.push(task);
 		}
 		else
 		{
@@ -33,9 +34,16 @@ public:
 				GCETask task;
 				if (mCentralTaskQueue.try_pop(task))
 				{
-					//TODO: task를 수행하고 mRemainTaskCount를 하나 감소 
-					// mRemainTaskCount가 0이면 break;
-					
+					task();
+
+					// 큐에 남은 요소가 없다는 거다... 끝나도 된다.
+					if (InterlockedDecrement64(&mRemainTaskCount) == 1)
+						break;
+				}
+				else
+				{
+					// 큐가 비었다면 끝나도된다..
+					break;
 				}
 			}
 		}
