@@ -24,4 +24,6 @@
 #include <ppl.h>
 #include <concurrent_queue.h>
 
+#pragma comment(lib,"ws2_32.lib")
+#pragma comment(lib,"mswsock.lib")
 

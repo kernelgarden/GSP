@@ -28,7 +28,7 @@ void PlayerManager::UnregisterPlayer(int playerId)
 
 int PlayerManager::GetCurrentPlayers(PlayerList& outList)
 {
-	FastSpinlockGuard inclusive(mLock);
+	FastSpinlockGuard inclusive(mLock, false);
 
 	int total = 0;
 

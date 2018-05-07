@@ -15,13 +15,15 @@ public:
 	template <class R, class T, class... Args>
 	R DoSync(R (T::*memfunc)(Args...), Args... args)
 	{
-		static_assert(true == std::is_convertible<T, SyncExecutable>::value, "T should be derived from SyncExecutable");
+		static_assert(true == std::is_convertible<T*, SyncExecutable*>::value, "T should be derived from SyncExecutable");
 
 		EnterLock();
-		R ret = memfunc(args...);
+		auto aaa = GetSharedFromThis<T>();
+		//(std::static_pointer_cast<T>(this)->*memfunc)(args...);
+		//std::bind(memfunc, this, args...)();
+		//(*this.*memfunc)(args...);
+		//auto ret = (*(T*)this).*memfunc(std::forward<Args>(args)...);
 		LeaveLock();
-
-		return ret;
 	}
 	
 
@@ -31,10 +33,10 @@ public:
  	template <class T>
 	std::shared_ptr<T> GetSharedFromThis()
  	{
-		static_assert(true == std::is_convertible<T, SyncExecutable>::value, "T should be derived from SyncExecutable");
+		static_assert(true == std::is_convertible<T*, SyncExecutable*>::value, "T should be derived from SyncExecutable");
  		
 		//return std::shared_ptr<T>((Player*)this); ///< 이렇게 하면 안될걸???
-		return std::static_pointer_cast<SyncExecutable>(shared_from_this());
+		return std::static_pointer_cast<T>(shared_from_this());
  	}
 
 private:
@@ -49,5 +51,5 @@ void DoSyncAfter(uint32_t after, T instance, F memfunc, Args&&... args)
 	static_assert(true == is_shared_ptr<T>::value, "T should be shared_ptr");
 	static_assert(true == std::is_convertible<T, std::shared_ptr<SyncExecutable>>::value, "T should be shared_ptr SyncExecutable");
 
-	LTimer->PushTimerJob(instance, std::bind(&T::memfunc, std::ref(memFunc), std::forward<Args>(args)...), after);
+	LTimer->PushTimerJob(instance, std::bind(memfunc, instance, std::forward<Args>(args)...), after);
 }

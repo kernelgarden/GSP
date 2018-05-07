@@ -61,14 +61,13 @@ void FastSpinlock::EnterReadLock()
 			YieldProcessor();
 
 		// 이시점에 쓰려고 하는 놈이 없다면 readlock을 얻는다.
-		if (InterlockedIncrement(&mLockFlag) & LF_WRITE_MASK == 0)
+		if ((InterlockedIncrement(&mLockFlag) & LF_WRITE_MASK) == 0)
 		{
 			return;
 		}
-		else
-		{
-			InterlockedDecrement(&mLockFlag);
-		}
+
+		// 락을 얻기 직전에 쓰려고 한 놈이 있어서 readlock을 얻지 못하고 다시 대기한다.
+		InterlockedDecrement(&mLockFlag);
 	}
 }
 

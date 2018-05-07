@@ -44,6 +44,7 @@ void Player::OnTick()
 	if (!IsAlive())
 		return;
 
+	//printf_s("I am Player [%d]! Tick\n", mPlayerId);
 	
 	/// 랜덤으로 이벤트를 발생시켜보기 (예: 다른 모든 플레이어에게 버프 주기)
 	if (rand() % 100 == 0) ///< 1% 확률
@@ -55,11 +56,11 @@ void Player::OnTick()
 		auto playerEvent = std::make_shared<AllPlayerBuffEvent>(buffId, duration);
 		GCEDispatch(playerEvent, &AllPlayerBuffEvent::DoBuffToAllPlayers, mPlayerId);
 	}
-
+ 
 	// 여기서 체크해도되나?? 오버헤드가 클것 같아보임..
 	auto playerDecayEvent = std::make_shared<AllPlayerBuffDecay>();
 	GCEDispatch(playerDecayEvent, &AllPlayerBuffDecay::CheckBuffTimeout);
-	
+
 	if (mHeartBeat > 0)
 		DoSyncAfter(mHeartBeat, GetSharedFromThis<Player>(), &Player::OnTick);
 }
