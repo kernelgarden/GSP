@@ -37,7 +37,7 @@ public:
 					task();
 
 					// 큐에 남은 요소가 없다는 거다... 끝나도 된다.
-					if (InterlockedDecrement64(&mRemainTaskCount) == 1)
+					if (InterlockedDecrement64(&mRemainTaskCount) == 0)
 						break;
 				}
 				else

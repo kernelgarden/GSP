@@ -17,6 +17,11 @@ public:
 	{
 		static_assert(true == std::is_convertible<T*, SyncExecutable*>::value, "T should be derived from SyncExecutable");
 
+		FastSpinlockGuard criticalSection(mLock);
+		auto func = std::bind(memfunc, GetSharedFromThis<T>(), std::forward<Args>(args)...);
+		return static_cast<R>(func());
+		//return (GetSharedFromThis<T>()->memfunc)(args...);
+		/*
 		EnterLock();
 		auto aaa = GetSharedFromThis<T>();
 		//(std::static_pointer_cast<T>(this)->*memfunc)(args...);
@@ -24,6 +29,7 @@ public:
 		//(*this.*memfunc)(args...);
 		//auto ret = (*(T*)this).*memfunc(std::forward<Args>(args)...);
 		LeaveLock();
+		*/
 	}
 	
 
